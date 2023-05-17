@@ -2,6 +2,7 @@ package com.ll.restproject.boundedContext.member.controller;
 
 import com.ll.restproject.boundedContext.member.entity.Member;
 import com.ll.restproject.boundedContext.member.service.MemberService;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
@@ -30,7 +31,8 @@ public class MemberController {
         private String password;
     }
     @PostMapping("/login") //@RequestBody json으로 받은 데이터를 해석할 수 있음
-    public Member login(@Valid @RequestBody LoginRequest loginRequest) {
+    public Member login(@Valid @RequestBody LoginRequest loginRequest, HttpServletResponse resp) {
+       resp.addHeader("Authentication","JMT 토큰");
         return memberService.findByUsername(loginRequest.getUsername()).orElse(null);
     }
 }
