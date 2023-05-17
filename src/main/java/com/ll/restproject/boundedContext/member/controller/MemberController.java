@@ -31,8 +31,9 @@ public class MemberController {
         private String password;
     }
     @PostMapping("/login") //@RequestBody json으로 받은 데이터를 해석할 수 있음
-    public Member login(@Valid @RequestBody LoginRequest loginRequest, HttpServletResponse resp) {
-       resp.addHeader("Authentication","JMT 토큰");
-        return memberService.findByUsername(loginRequest.getUsername()).orElse(null);
+    public String login(@Valid @RequestBody LoginRequest loginRequest, HttpServletResponse resp) {
+       String accessToken=memberService.genAccessToken(loginRequest.getUsername(),loginRequest.getPassword());
+        resp.addHeader("Authentication",accessToken);
+      return "응답본문";
     }
 }

@@ -23,4 +23,7 @@ logging:
     org.hibernate.orm.jdbc.extract: TRACE
 custom:
   site:
-    baseUrl: http://localhost
+  baseUrl: http://localhost
+
+  jwt:
+    secretKey: abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789
