@@ -43,7 +43,6 @@ public class MemberController {
     @PostMapping("/login") //@RequestBody json으로 받은 데이터를 해석할 수 있음
     public RsData<LoginResponse> login(@Valid @RequestBody LoginRequest loginRequest, HttpServletResponse resp) {
        String accessToken=memberService.genAccessToken(loginRequest.getUsername(),loginRequest.getPassword());
-        resp.addHeader("Authentication",accessToken);
 
         return RsData.of(
                 "S-1",
