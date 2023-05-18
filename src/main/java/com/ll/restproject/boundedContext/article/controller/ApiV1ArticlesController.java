@@ -20,6 +20,7 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
@@ -30,6 +31,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 public class ApiV1ArticlesController {
     private final ArticleService articleService;
     private final MemberRepository memberService;
+
     @AllArgsConstructor
     @Getter
     public static class ArticlesResponse {
@@ -67,35 +69,80 @@ public class ApiV1ArticlesController {
                 null
         ));
     }
-        @Data
-        public static class WriteRequest {
-            @NotBlank
-            private String subject;
-            @NotBlank
-            private String content;
-        }
 
-        @AllArgsConstructor
-        @Getter
-        public static class WriteResponse {
-            private final Article article;
-        }
-
-        @PostMapping(value = "")
-        @Operation(summary = "등록", security = @SecurityRequirement(name = "bearerAuth"))
-        public RsData<WriteResponse> write(
-                @AuthenticationPrincipal User user,
-                @Valid @RequestBody WriteRequest writeRequest
-    ) {
-            Member member = memberService.findByUsername(user.getUsername()).orElseThrow();
-            RsData<Article> writeRs = articleService.write(member, writeRequest.getSubject(), writeRequest.getContent());
-
-            if (writeRs.isFail()) return (RsData) writeRs;
-
-            return RsData.of(
-                    writeRs.getResultCode(),
-                    writeRs.getMsg(),
-                    new WriteResponse(writeRs.getData())
-            );
-        }
+    @Data
+    public static class WriteRequest {
+        @NotBlank
+        private String subject;
+        @NotBlank
+        private String content;
     }
+
+    @AllArgsConstructor
+    @Getter
+    public static class WriteResponse {
+        private final Article article;
+    }
+
+    @PostMapping(value = "", consumes = APPLICATION_JSON_VALUE)
+    @Operation(summary = "등록", security = @SecurityRequirement(name = "bearerAuth"))
+    public RsData<WriteResponse> write(
+            @AuthenticationPrincipal User user,
+            @Valid @RequestBody WriteRequest writeRequest
+    ) {
+        Member member = memberService.findByUsername(user.getUsername()).orElseThrow();
+        RsData<Article> writeRs = articleService.write(member, writeRequest.getSubject(), writeRequest.getContent());
+
+        if (writeRs.isFail()) return (RsData) writeRs;
+
+        return RsData.of(
+                writeRs.getResultCode(),
+                writeRs.getMsg(),
+                new WriteResponse(writeRs.getData())
+        );
+    }
+
+    @Data
+    public static class ModifyRequest {
+        @NotBlank
+        private String subject;
+        @NotBlank
+        private String content;
+    }
+
+    @AllArgsConstructor
+    @Getter
+    public static class ModifyResponse {
+        private final Article article;
+    }
+
+    @PatchMapping(value = "/{id}", consumes = APPLICATION_JSON_VALUE)
+    @Operation(summary = "수정", security = @SecurityRequirement(name = "bearerAuth"))
+    public RsData<ModifyResponse> modify(
+            @AuthenticationPrincipal User user,
+            @Valid @RequestBody ModifyRequest modifyRequest,
+            @PathVariable Long id
+    ) {
+        Member member = memberService.findByUsername(user.getUsername()).orElseThrow();
+
+        Optional<Article> opArticle = articleService.findById(id);
+
+        if (opArticle.isEmpty()) return RsData.of(
+                "F-1",
+                "%d번 게시물은 존재하지 않습니다.".formatted(id),
+                null
+        );
+
+        RsData canModifyRs = articleService.canModify(member, opArticle.get());
+
+        if (canModifyRs.isFail()) return canModifyRs;
+
+        RsData<Article> modifyRs = articleService.modify(opArticle.get(), modifyRequest.getSubject(), modifyRequest.getContent());
+
+        return RsData.of(
+                modifyRs.getResultCode(),
+                modifyRs.getMsg(),
+                new ModifyResponse(modifyRs.getData())
+        );
+    }
+}
